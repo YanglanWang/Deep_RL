@@ -1,5 +1,5 @@
 from DQN.maze_env import Maze
-from DQN.RL_brain import DeepNetwork
+from DQN.RL_brain import DeepQNetwork
 def run_maze():
     step=0
     for episode in range(300):
@@ -21,7 +21,7 @@ def run_maze():
 
 if __name__=='__main__':
     env=Maze()
-    RL=DeepNetwork(env.n_actions,env.n_features,learning_rate=0.01,reward_decay=0.9,e_greedy=0.9,replace_target_iter=200,memory_size=2000)
+    RL=DeepQNetwork(env.n_actions,env.n_features,learning_rate=0.01,reward_decay=0.9,e_greedy=0.9,replace_target_iter=200,memory_size=2000)
     env.after(100,run_maze())
     env.mainloop()
     RL.plot_cost()

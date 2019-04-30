@@ -1,7 +1,6 @@
 import gym
 # from RL_brain import DeepQNetwork
 from DQN.RL_brain import DeepQNetwork
-
 env = gym.make('MountainCar-v0')
 env = env.unwrapped
 

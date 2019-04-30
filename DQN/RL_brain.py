@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-class DeepNetwork:
+class DeepQNetwork:
     def _build_net(self):
         self.s=tf.placeholder(tf.float32,[None,self.n_features],name='s')
         self.q_target=tf.placeholder(tf.float32,[None,self.n_actions],name='Q_target')
