@@ -1,44 +1,6 @@
 import tensorflow as tf
 import numpy as np
 class DeepQNetwork:
-    def _build_net(self):
-        self.s=tf.placeholder(tf.float32,[None,self.n_features],name='s')
-        self.q_target=tf.placeholder(tf.float32,[None,self.n_actions],name='Q_target')
-        with tf.variable_scope('eval_net'):
-            c_names,n_l1,w_initializer,b_initializer=\
-                ['eval_net_params',tf.GraphKeys.GLOBAL_VARIABLES],10,\
-                tf.random_normal_initializer(0,0.3),tf.constant_initializer(0.1)
-            with tf.variable_scope('l1'):
-                w1=tf.get_variable('w1',[self.n_features,n_l1],initializer=w_initializer,collections=c_names)
-                b1=tf.get_variable('b1',[1,n_l1],initializer=b_initializer,collections=c_names)
-                l1=tf.nn.relu(tf.matmul(self.s,w1)+b1)
-
-            with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w2', [n_l1,self.n_actions ], initializer=w_initializer, collections=c_names)
-                b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names)
-                self.q_eval = tf.matmul(l1, w2) + b2
-
-        with tf.variable_scope('loss'):
-            self.loss=tf.reduce_mean(tf.squared_difference(self.q_target,self.q_eval))
-        with tf.variable_scope('train'):
-            self._train_op=tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
-
-        self.s_ = tf.placeholder(tf.float32, [None, self.n_features], name='s_')  # 接收下个 observation
-        with tf.variable_scope('target_net'):
-            # c_names(collections_names) 是在更新 target_net 参数时会用到
-            c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-
-            # target_net 的第一层. collections 是在更新 target_net 参数时会用到
-            with tf.variable_scope('l1'):
-                w1 = tf.get_variable('w1', [self.n_features, n_l1], initializer=w_initializer, collections=c_names)
-                b1 = tf.get_variable('b1', [1, n_l1], initializer=b_initializer, collections=c_names)
-                l1 = tf.nn.relu(tf.matmul(self.s_, w1) + b1)
-
-            # target_net 的第二层. collections 是在更新 target_net 参数时会用到
-            with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w2', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
-                b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names)
-                self.q_next = tf.matmul(l1, w2) + b2
 
     def __init__(self,n_actions,n_features,learning_rate=0.01,reward_decay=0.9,e_greedy=0.9,replace_target_iter=300,
                  memory_size=500,batch_size=32,e_greedy_increment=None,output_graph=False):
@@ -69,6 +31,45 @@ class DeepQNetwork:
 
         self.sess.run(tf.global_variables_initializer())
         self.cost_his=[]
+
+    def _build_net(self):
+        self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')
+        self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='Q_target')
+        with tf.variable_scope('eval_net'):
+            c_names, n_l1, w_initializer, b_initializer = \
+                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 10, \
+                tf.random_normal_initializer(0, 0.3), tf.constant_initializer(0.1)
+            with tf.variable_scope('l1'):
+                w1 = tf.get_variable('w1', [self.n_features, n_l1], initializer=w_initializer, collections=c_names)
+                b1 = tf.get_variable('b1', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l1 = tf.nn.relu(tf.matmul(self.s, w1) + b1)
+
+            with tf.variable_scope('l2'):
+                w2 = tf.get_variable('w2', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
+                b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names)
+                self.q_eval = tf.matmul(l1, w2) + b2
+
+        with tf.variable_scope('loss'):
+            self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
+        with tf.variable_scope('train'):
+            self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
+
+        self.s_ = tf.placeholder(tf.float32, [None, self.n_features], name='s_')  # 接收下个 observation
+        with tf.variable_scope('target_net'):
+            # c_names(collections_names) 是在更新 target_net 参数时会用到
+            c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
+
+            # target_net 的第一层. collections 是在更新 target_net 参数时会用到
+            with tf.variable_scope('l1'):
+                w1 = tf.get_variable('w1', [self.n_features, n_l1], initializer=w_initializer, collections=c_names)
+                b1 = tf.get_variable('b1', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l1 = tf.nn.relu(tf.matmul(self.s_, w1) + b1)
+
+            # target_net 的第二层. collections 是在更新 target_net 参数时会用到
+            with tf.variable_scope('l2'):
+                w2 = tf.get_variable('w2', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
+                b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names)
+                self.q_next = tf.matmul(l1, w2) + b2
 
     def store_transition(self, s, a, r, s_):
         if not hasattr(self, 'memory_counter'):

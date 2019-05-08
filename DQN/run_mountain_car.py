@@ -1,6 +1,8 @@
 import gym
 # from RL_brain import DeepQNetwork
 from DQN.RL_brain import DeepQNetwork
+from gym import wrappers
+from time import time
 env = gym.make('MountainCar-v0')
 env = env.unwrapped
 
@@ -14,7 +16,10 @@ RL = DeepQNetwork(n_actions=3, n_features=2, learning_rate=0.001, e_greedy=0.9,
                   e_greedy_increment=0.0001,)
 
 total_steps = 0
+# env = gym.wrappers.Monitor(env, "recording")
+# env = gym.wrappers.Monitor(env, "recording", video_callable=lambda episode_id: True)
 
+# env = wrappers.Monitor(env, './videos/' + str(time()) + '/',force=True)
 
 for i_episode in range(10):
 
