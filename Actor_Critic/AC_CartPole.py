@@ -54,7 +54,7 @@ class Critic(object):
     def __init__(self,sess,n_features,lr=0.01):
         self.sess=sess
         self.s=tf.placeholder(tf.float32,[1,n_features],'state')
-        self.v_=tf.placeholder(tf.float32,[1,1],'v_next')
+        self.v_=tf.placeholder(tf.float32,[1,1],'v_next')#V(s_next)
         self.r=tf.placeholder(tf.float32,None,'r')
         with tf.variable_scope('Critic'):
             l1=tf.layers.dense(
@@ -84,7 +84,7 @@ class Critic(object):
         return td_error
 sess=tf.Session()
 actor=Actor(sess,n_features=N_F,n_actions=N_A,lr=LR_A)
-critic=Critic(sess,n_features=N_F,lr=LR_A)
+critic=Critic(sess,n_features=N_F,lr=LR_C)
 
 sess.run(tf.global_variables_initializer())
 if OUTPUT_GRAPH:
