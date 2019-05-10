@@ -26,6 +26,7 @@ class DDPG(object):
 
         with tf.variable_scope('Actor'):
             self.a=self._build_a(self.S,scope='eval',trainable=True)
+            # guess: because line51 use self.run(self.a....),so this line is written as self.a=...
             a_=self._build_a(self.S_,scope='target',trainable=False)
         with tf.variable_scope('Critic'):
             q=self._build_c(self.S,self.a,scope='eval',trainable=True)
@@ -59,7 +60,7 @@ class DDPG(object):
         br=bt[:,-self.s_dim-1:-self.s_dim]
         bs_=bt[:,-self.s_dim:]
         self.sess.run(self.atrain,{self.S:bs})
-        self.sess.run(self.ctrain,{self.S:bs,self.a:ba,self.R:br,self.S:bs_})
+        self.sess.run(self.ctrain,{self.S:bs,self.a:ba,self.R:br,self.S_:bs_})
 
     def store_transition(self,s,a,r,s_):
         transition=np.hstack((s,a,[r],s_))
@@ -70,7 +71,7 @@ class DDPG(object):
     def _build_a(self,s,scope,trainable):
         with tf.variable_scope(scope):
             net=tf.layers.dense(s,30,activation=tf.nn.relu,name='l1',trainable=trainable)
-            a=tf.nn.dense(net,self.a_dim,activation=tf.nn.tanh,name='a',trainable=trainable)
+            a=tf.layers.dense(net,self.a_dim,activation=tf.nn.tanh,name='a',trainable=trainable)
             return tf.multiply(a,self.a_bound,name='scaled_a')
 
     def _build_c(self,s,a,scope,trainable):
