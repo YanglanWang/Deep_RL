@@ -46,12 +46,12 @@ class Actor(object):
         with tf.variable_scope(scope):
             init_w=tf.random_normal_initializer(0.,0.3)
             init_b=tf.constant_initializer(0.1)
-            net=tf.layers.dense(3,30,activation=tf.nn.relu,kernel_initializer=init_w,bias_initializer=init_b,
+            net=tf.layers.dense(s,30,activation=tf.nn.relu,kernel_initializer=init_w,bias_initializer=init_b,
                                 name='l1',trainable=trainable)
             with tf.variable_scope('a'):
                 actions=tf.layers.dense(net,self.a_dim,activation=tf.nn.tanh,kernel_initializer=init_w,
                                         bias_initializer=init_b,name='a',trainable=trainable)
-                scaled_a=tf.muttiply(actions,self.action_bound,name='scaled_a')
+                scaled_a=tf.multiply(actions,self.action_bound,name='scaled_a')
         return scaled_a
     def learn(self,s):
         self.sess.run(self.train_op,feed_dict={S:s})
@@ -142,3 +142,57 @@ class Memory(object):
 env=gym.make(ENV_NAME)
 env=env.unwrapped
 env.seed(1)
+
+state_dim=env.observation_space.shape[0]
+action_dim=env.action_space.shape[0]
+action_bound=env.action_space.high
+
+with tf.name_scope('S'):
+    S=tf.placeholder(tf.float32,shape=[None,state_dim],name='s')
+with tf.name_scope('R'):
+    R=tf.placeholder(tf.float32,[None,1],name='r')
+with tf.name_scope('S_'):
+    S_=tf.placeholder(tf.float32,shape=[None,state_dim],name='s_')
+
+sess=tf.Session()
+actor=Actor(sess,action_dim,action_bound,LR_A,REPLACEMENT)
+critic=Critic(sess,state_dim,action_dim,LR_C,GAMMA,REPLACEMENT,actor.a,actor.a_)
+actor.add_grad_to_graph(critic.a_grads)
+
+sess.run(tf.global_variables_initializer())
+
+M=Memory(MEMORY_CAPACITY,dims=2*state_dim+action_dim+1)
+
+if OUTPUT_GRAPH:
+    tf.summary.FileWriter('logs/',sess.graph)
+var=3
+t1=time.time()
+for i in range(MAX_EPISODES):
+    s=env.reset()
+    ep_reward=0
+    for j in range(MAX_EP_STEPS):
+        if RENDER:
+            env.render()
+        a=actor.choose_action(s)
+        a=np.clip(np.random.normal(a,var),-2,2)
+        s_,r,done,info=env.step(a)
+
+        M.store_transition(s,a,r/10,s_)
+        if M.pointer>MEMORY_CAPACITY:
+            var*=.9995
+            b_M=M.sample(BATCH_SIZE)
+            b_s=b_M[:,:state_dim]
+            b_a=b_M[:,state_dim:state_dim+action_dim]
+            b_r=b_M[:,-state_dim-1:-state_dim]
+            b_s_=b_M[:,-state_dim:]
+
+            critic.learn(b_s,b_a,b_r,b_s_)
+            actor.learn(b_s)
+        s=s_
+        ep_reward+=r
+        if j==MAX_EP_STEPS-1:
+            print('Episode:',i,'Reward:%i'%int(ep_reward),'Explore:%.2f'%var,)
+            if ep_reward>-300:
+                RENDER=True
+            break
+print('Runing time:',time.time()-t1)
