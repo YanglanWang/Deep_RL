@@ -160,10 +160,14 @@ class DQNPrioritizedReplay:
         e_params = tf.get_collection('eval_net_params')
         self.replace_target_op = [tf.assign(t, e) for t, e in zip(t_params, e_params)]
 
+
+
         if self.prioritized:
             self.memory = Memory(capacity=memory_size)
         else:
             self.memory = np.zeros((self.memory_size, n_features*2+2))
+
+
 
         if sess is None:
             self.sess = tf.Session()
@@ -203,7 +207,12 @@ class DQNPrioritizedReplay:
 
         with tf.variable_scope('loss'):
             if self.prioritized:
+
+
                 self.abs_errors = tf.reduce_sum(tf.abs(self.q_target - self.q_eval), axis=1)    # for updating Sumtree
+
+
+
                 self.loss = tf.reduce_mean(self.ISWeights * tf.squared_difference(self.q_target, self.q_eval))
             else:
                 self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))

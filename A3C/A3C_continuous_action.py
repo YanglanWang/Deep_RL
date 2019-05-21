@@ -137,7 +137,7 @@ class Worker(object):
                     break
 if __name__=='__main__':
     SESS=tf.Session()
-    with tf.device("/gpu:0"):
+    with tf.device("/cpu:0"):
         OPT_A=tf.train.RMSPropOptimizer(LR_A,name='RMSPropA')
         OPT_C=tf.train.RMSPropOptimizer(LR_C,name='RMSPropC')
         GLOBAL_AC=ACNet(GLOBAL_NET_SCOPE)
