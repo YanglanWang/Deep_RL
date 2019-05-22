@@ -10,7 +10,6 @@ class PolicyGradient:
         self.n_features=n_features
         self.lr=learning_rate
         self.gamma=reward_decay
-
         self.ep_obs,self.ep_as,self.ep_rs=[],[],[]
 
         self._bulid_net()
@@ -36,6 +35,7 @@ class PolicyGradient:
 
         with tf.name_scope('loss'):
             neg_log_prob=tf.nn.sparse_softmax_cross_entropy_with_logits(logits=all_act,labels=self.tf_acts)
+            # neg_log_prob=tf.reduce_sum(-tf.log(self.all_act_prob)*tf.one_hot(self.tf_acts,self.n_actions),axis=1)
             loss=tf.reduce_mean(neg_log_prob*self.tf_vt)
 
         with tf.name_scope('train'):
@@ -58,6 +58,7 @@ class PolicyGradient:
         self.ep_obs,self.ep_as,self.ep_rs=[],[],[]
         return discounted_ep_rs_norm
 
+    # when all steps in this episode completes, algorithm changes rewards in each step to normalized V
     def _discount_and_norm_rewards(self):
         discounted_ep_rs=np.zeros_like(self.ep_rs)
         running_add=0
