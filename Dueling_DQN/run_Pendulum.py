@@ -34,6 +34,7 @@ def train(RL):
         observation=observation_
         total_steps+=1
     return RL.cost_his,acc_r
+
 c_natural,r_natural=train(natural_DQN)
 c_dueling,r_dueling=train(dueling_DQN)
 

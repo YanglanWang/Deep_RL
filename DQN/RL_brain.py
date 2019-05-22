@@ -14,12 +14,9 @@ class DeepQNetwork:
         self.batch_size=batch_size
         self.epsilon_increment=e_greedy_increment
         self.epsilon=0 if e_greedy_increment is not None else self.epsilon_max
-
         self.learn_step_counter=0
-
         self.memory=np.zeros((self.memory_size,n_features*2+2))
         self._build_net()
-
         t_params=tf.get_collection('target_net_params')
         e_params=tf.get_collection('eval_net_params')
         self.replace_target_op=[tf.assign(t,e) for t,e in zip(t_params,e_params)]

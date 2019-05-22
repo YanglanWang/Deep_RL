@@ -39,9 +39,7 @@ class DoubleDQN:
         self.batch_size = batch_size
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
-
         self.double_q = double_q    # decide to use double q or not
-
         self.learn_step_counter = 0
         self.memory = np.zeros((self.memory_size, n_features*2+2))
         self._build_net()
@@ -127,6 +125,8 @@ class DoubleDQN:
             sample_index = np.random.choice(self.memory_counter, size=self.batch_size)
         batch_memory = self.memory[sample_index, :]
 
+#****************************************************************************
+#        after that, something different from DQN/RL_brain.py
         q_next, q_eval4next = self.sess.run(
             [self.q_next, self.q_eval],
             feed_dict={self.s_: batch_memory[:, -self.n_features:],    # next observation

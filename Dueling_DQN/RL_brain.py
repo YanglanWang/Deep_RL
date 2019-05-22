@@ -41,6 +41,7 @@ class DuelingDQN:
                 b1=tf.get_variable('b1',[1,n_l1],initializer=b_initializer,collections=c_names)
                 l1=tf.nn.relu(tf.matmul(s,w1)+b1)
 
+#................the different from DQN/RL_brain starts
             if self.dueling:
                 with tf.variable_scope('Value'):
                     w2=tf.get_variable('w2',[n_l1,1],initializer=w_initializer,collections=c_names)
@@ -53,7 +54,9 @@ class DuelingDQN:
                     self.A=tf.matmul(l1,w2)+b2
 
                 with tf.variable_scope('Q'):
-                    out=self.V+(self.A-tf.reduce_mean(self.A,axis=1,keep_dims=True))
+                    # out=self.V+(self.A-tf.reduce_mean(self.A,axis=1,keep_dims=True))
+                    out=self.V+(self.A)
+
             else:
                 with tf.variable_scope('Q'):
                     w2=tf.get_variable('w2',[n_l1,self.n_actions],initializer=w_initializer,collections=c_names)

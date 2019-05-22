@@ -87,7 +87,7 @@ class DeepQNetwork:
                                           bias_initializer=b_initializer, name='t2')
 
         with tf.variable_scope('q_target'):
-            q_target = self.r + self.gamma * tf.reduce_max(self.q_next, axis=1, name='Qmax_s_')    # shape=(None, )
+            q_target = self.r + self.gamma * tf.reduce_max(self.q_next, axis=1, name='Qmax_s_')    # shape=(None, 1)
             #the shape of q_target in RL_brain is (None, n_actions)
 
             self.q_target = tf.stop_gradient(q_target)
