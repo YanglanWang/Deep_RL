@@ -13,8 +13,7 @@ LR_C=0.001
 GAMMA=0.9
 REPLACEMENT=[
     dict(name='soft',tau=0.01),
-    dict(name='hard',rep_iter_a=600,rep_iter_c=500)
-][0]
+    dict(name='hard',rep_iter_a=600,rep_iter_c=500)][0]
 MEMORY_CAPACITY=10000
 BATCH_SIZE=32
 RENDER=False
@@ -70,6 +69,7 @@ class Actor(object):
         with tf.variable_scope('A_train'):
             opt=tf.train.AdamOptimizer(-self.lr)
             self.train_op=opt.apply_gradients(zip(self.policy_grads,self.e_params))
+            #let the params update in accordance with the direction of gradient decrease
 
 class Critic(object):
     def __init__(self,sess,state_dim,action_dim,learning_rate,gamma,replacement,a,a_):
@@ -82,6 +82,11 @@ class Critic(object):
 
         with tf.variable_scope('Critic'):
             self.a=tf.stop_gradient(a)
+
+            # my understanding: the optimization of q_value is based on action, if tf.stop_gradient(a) wasn't implemented,
+            # the optimization might involve other parameters in Actor class, because a is the result of Actor.
+            #but 'a_' doesn't need to stop_gradient, for its trainable is False
+
             self.q=self._build_net(S,self.a,'eval_net',trainable=True)
             self.q_=self._build_net(S_,a_,'target_net',trainable=False)
 
@@ -93,14 +98,18 @@ class Critic(object):
             self.loss=tf.reduce_mean(tf.squared_difference(self.target_q,self.q))
         with tf.variable_scope('C_train'):
             self.train_op=tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+
         with tf.variable_scope('a_grad'):
             self.a_grads=tf.gradients(self.q,a)[0]
+        # calculate the gradient of q based action,[0] indicates gradient matrix, [1] indicates type
+
         if self.replacement['name']=='hard':
             self.t_replace_counter=0
             self.hard_replacement=[tf.assign(t,e) for t,e in zip(self.t_params,self.e_params)]
         else:
             self.soft_replacement=[tf.assign(t,(1-self.replacement['tau'])*t+self.replacement['tau']*e)
                                    for t,e in zip(self.t_params,self.e_params)]
+
     def _build_net(self,s,a,scope,trainable):
         with tf.variable_scope(scope):
             init_w=tf.random_normal_initializer(0.,0.1)
@@ -114,6 +123,7 @@ class Critic(object):
             with tf.variable_scope('q'):
                 q=tf.layers.dense(net,1,kernel_initializer=init_w,bias_initializer=init_b,trainable=trainable)
         return q
+
     def learn(self,s,a,r,s_):
         self.sess.run(self.train_op,feed_dict={S:s,self.a:a,R:r,S_:s_})
         if self.replacement['name']=='soft':
@@ -135,7 +145,7 @@ class Memory(object):
         self.pointer+=1
 
     def sample(self,n):
-        assert self.pointer >= self.capacity, "Memory has not been fulfilled"
+        assert self.pointer >= self.capacity, "Memory has been fulfilled"
         indices=np.random.choice(self.capacity,size=n)
         return self.data[indices,:]
 
