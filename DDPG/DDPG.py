@@ -11,9 +11,11 @@ MAX_EP_STEPS=200
 LR_A=0.001
 LR_C=0.001
 GAMMA=0.9
+
 REPLACEMENT=[
     dict(name='soft',tau=0.01),
     dict(name='hard',rep_iter_a=600,rep_iter_c=500)][0]
+
 MEMORY_CAPACITY=10000
 BATCH_SIZE=32
 RENDER=False
@@ -52,6 +54,7 @@ class Actor(object):
                                         bias_initializer=init_b,name='a',trainable=trainable)
                 scaled_a=tf.multiply(actions,self.action_bound,name='scaled_a')
         return scaled_a
+
     def learn(self,s):
         self.sess.run(self.train_op,feed_dict={S:s})
         if self.replacement['name']=='soft':
@@ -60,9 +63,11 @@ class Actor(object):
             if self.t_replace_counter % self.replacement['rep_iter_a']==0:
                 self.sess.run(self.hard_replace)
             self.r_replace_counter+=1
+
     def choose_action(self,s):
         s=s[np.newaxis,:]
         return self.sess.run(self.a,feed_dict={S:s})[0]
+
     def add_grad_to_graph(self,a_grads):
         with tf.variable_scope('policy_grads'):
             self.policy_grads=tf.gradients(ys=self.a,xs=self.e_params,grad_ys=a_grads)
@@ -101,6 +106,7 @@ class Critic(object):
 
         with tf.variable_scope('a_grad'):
             self.a_grads=tf.gradients(self.q,a)[0]
+        # this a means the actor's a
         # calculate the gradient of q based action,[0] indicates gradient matrix, [1] indicates type
 
         if self.replacement['name']=='hard':
@@ -132,6 +138,7 @@ class Critic(object):
             if self.t_replace_counter % self.replacement['rep_iter_c']==0:
                 self.sess.run(self.hard_replacement)
             self.t_replace_counter+=1
+
 class Memory(object):
     def __init__(self,capacity,dims):
         self.capacity=capacity
@@ -155,6 +162,8 @@ env.seed(1)
 
 state_dim=env.observation_space.shape[0]
 action_dim=env.action_space.shape[0]
+# DDPG focuses on action indicated by a continuous value
+# if action_space.shape[0] has more than one element, DDPG will not be used.
 action_bound=env.action_space.high
 
 with tf.name_scope('S'):
