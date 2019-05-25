@@ -94,6 +94,7 @@ class Critic(object):
 
             self.q=self._build_net(S,self.a,'eval_net',trainable=True)
             self.q_=self._build_net(S_,a_,'target_net',trainable=False)
+            # i guess the a_ is wrong, a_ is actor.a_, while S_ corresponding to a_ is from last circulation
 
             self.e_params=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Critic/eval_net')
             self.t_params=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Critic/target_net')
@@ -205,8 +206,8 @@ for i in range(MAX_EPISODES):
             b_r=b_M[:,-state_dim-1:-state_dim]
             b_s_=b_M[:,-state_dim:]
 
-            critic.learn(b_s,b_a,b_r,b_s_)
             actor.learn(b_s)
+            critic.learn(b_s,b_a,b_r,b_s_)
         s=s_
         ep_reward+=r
         if j==MAX_EP_STEPS-1:

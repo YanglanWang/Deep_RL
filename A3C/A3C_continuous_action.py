@@ -91,12 +91,14 @@ class Worker(object):
         self.AC=ACNet(name,globalAC)
     def work(self):
         global GLOBAL_RUNNING_R,GLOBAL_EP
+        #GLOBAL_EP calculates the number of episodes
         total_step=1
+        #calculate the total time step, only be used for update
         buffer_s,buffer_a,buffer_r=[],[],[]
         while not COORD.should_stop() and GLOBAL_EP<MAX_GLOBAL_EP:
             s=self.env.reset()
             ep_r=0
-            for ep_r in range(MAX_EP_STEP):
+            for ep_t in range(MAX_EP_STEP):
                 a=self.AC.choose_action(s)
                 s_,r,done,info=self.env.step(a)
                 done=True if ep_t==MAX_EP_STEP-1 else False
@@ -123,8 +125,10 @@ class Worker(object):
                         self.AC.v_target:buffer_v_target,
                     }
                     self.AC.update_global(feed_dict)
+                    # means push
                     buffer_s, buffer_a, buffer_r =[],[],[]
                     self.AC.pull_global()
+                    #means pull
                 s=s_
                 total_step+=1
                 if done:
@@ -145,7 +149,12 @@ if __name__=='__main__':
         for i in range(N_WORKERS):
             i_name='W_%i'%i
             workers.append(Worker(i_name,GLOBAL_AC))
+            # why should GLOBAL_AC be added as a parameter:
+            # because in self.pull_a_params_op and self.update_a_op, global_ac will be used to update or be updated.
+
     COORD=tf.train.Coordinator()
+
+
     SESS.run(tf.global_variables_initializer())
     if OUTPUT_GRAPH:
         if os.path.exists(LOG_DIR):
@@ -155,6 +164,7 @@ if __name__=='__main__':
     for worker in workers:
         job=lambda: worker.work()
         t=threading.Thread(target=job)
+        t.start()
         worker_threads.append(t)
     COORD.join(worker_threads)
 
